@@ -1,7 +1,6 @@
 var express = require('express');
 var router = express.Router();
-
-var users = [];
+var User = require("../models/User");
 
 function findUser( userId, func ) {
 	var usersLength = users.length;
@@ -30,30 +29,42 @@ function findUser( userId, func ) {
 
 /* GET users listing. */
 router.get('/', function(req, res, next) {
-	res.send(users);
+	User.find(function(err, user) {
+		if(err) {
+			res.sned(err);
+		}
+		res.send({
+			message : "success",
+			code : 200,
+			user : user
+		});
+	});
 });
 
 router.post("/", function( req, res, next ) {
 	var param = req.body;
 	var date = new Date();
-	users.push({
+	
+	var user = new User({
 		userId : param.userId,
 		userNm : param.userNm,
 		email : param.email,
 		password : param.password,
 		etc : param.etc,
 		createdAt : date,
-		thumbnail : '',
+		thumbnail : '',		
 	});
 
-   findUser( param.userId, function(i, user){
+	user.save(function(err, user){
+		if(err) {
+			res.send(err);
+		}
 		res.send({
 			message : "success",
 			code : 200,
-			users : user
-		});
-	} );
-
+			user : user
+		}); 
+	});
 
 });
 
@@ -62,6 +73,19 @@ router.put("/", function( req, res, next ) {
 
 	findUser( param.userId, function(i, user) {
 		var msg = "";
+		User.find({userId : param.userId}, function(err, user) {
+			if(err) {
+				res.sned(err);
+			}
+			res.send({
+				message : "success",
+				code : 200,
+				user : user
+			});
+		});
+
+
+
 		if( user != null ) {
 			var date = new Date();
 			user.userId = param.userId;

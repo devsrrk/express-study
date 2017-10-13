@@ -1,9 +1,13 @@
+process.env.NODE_ENV = process.env.NODE_ENV || "development"; // 환경 변수 설정
+
 var express = require('express');
 var path = require('path');
 var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+
+var db = require("./config/db");
 
 var index = require('./routes/index');
 var users = require('./routes/users');
