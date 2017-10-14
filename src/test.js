@@ -1,12 +1,13 @@
-"use strict";
-
 var a = b;
 
 var b = "erere";
 
-module.exports = function (app) {
+
+module.exports = function( app ){
 	app.test = "ee";
 };
 
+
 require("a")();
 require("a");
+

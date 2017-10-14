@@ -1,16 +1,28 @@
-var express = require('express');
-var router = express.Router();
-var User = require("../models/User");
+'use strict';
 
-function findUser( userId, func ) {
-	var usersLength = users.length;
-	for( var i = 0 ; i < usersLength ; i ++ ) {
-		if( users[i].userId === userId ) {
-			func(i, users[i]);
-		}
-	}
-	return null;
-}
+var _express = require('express');
+
+var _express2 = _interopRequireDefault(_express);
+
+var _User = require('../models/User');
+
+var _User2 = _interopRequireDefault(_User);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// const express = require('express');
+// const User = require("../models/User");
+var router = _express2.default.Router();
+
+// function findUser( userId, func ) {
+// 	let usersLength = users.length;
+// 	for( let i = 0 ; i < usersLength ; i ++ ) {
+// 		if( users[i].userId === userId ) {
+// 			func(i, users[i]);
+// 		}
+// 	}
+// 	return null;
+// }
 
 /*
 {
@@ -25,105 +37,112 @@ function findUser( userId, func ) {
 }
  */
 
-
-
 /* GET users listing. */
-router.get('/', function(req, res, next) {
-	User.find(function(err, user) {
-		if(err) {
+router.get('/', function (req, res, next) {
+	_User2.default.find(function (err, user) {
+		if (err) {
 			res.sned(err);
 		}
 		res.send({
-			message : "success",
-			code : 200,
-			user : user
+			message: "success",
+			code: 200,
+			user: user
 		});
 	});
 });
 
-router.post("/", function( req, res, next ) {
+router.post("/", function (req, res, next) {
 	var param = req.body;
 	var date = new Date();
-	
-	var user = new User({
-		userId : param.userId,
-		userNm : param.userNm,
-		email : param.email,
-		password : param.password,
-		etc : param.etc,
-		createdAt : date,
-		thumbnail : '',		
+	var newUser = new _User2.default({
+		userId: param.userId,
+		userNm: param.userNm,
+		email: param.email,
+		password: param.password,
+		etc: param.etc,
+		createdAt: date,
+		thumbnail: ''
 	});
 
-	user.save(function(err, user){
-		if(err) {
-			res.send(err);
-		}
-		res.send({
-			message : "success",
-			code : 200,
-			user : user
-		}); 
-	});
+	_User2.default.find({ userId: param.userId }, function (err, selectedUser) {
+		var msg = void 0;
 
-});
-
-router.put("/", function( req, res, next ) {
-	var param = req.body;
-
-	findUser( param.userId, function(i, user) {
-		var msg = "";
-		User.find({userId : param.userId}, function(err, user) {
-			if(err) {
-				res.sned(err);
-			}
-			res.send({
-				message : "success",
-				code : 200,
-				user : user
+		var save = function save() {
+			return new Promise(function (resolve, reject) {
+				if (selectedUser.length > 0) {
+					msg = "존재하는 ID입니다.";
+					reject(msg);
+				} else {
+					newUser.save(function (err, savedUser) {
+						if (err) {
+							return res.status(500).send(err);
+						}
+						msg = "저장했습니다.";
+						newUser = savedUser;
+						resolve(msg, newUser);
+					});
+				}
 			});
-		});
+		};
 
-
-
-		if( user != null ) {
-			var date = new Date();
-			user.userId = param.userId;
-			user.userNm = param.userNm;
-			user.email = param.email;
-			user.password = param.password;
-			user.etc = param.etc;
-			user.modifiedAt = date;
-			user.thumbnail = param.thumbnail;
-			msg = "수정했습니다.";
-		} else {
-			msg = "존재하지 않는 아이디입니다.";
-		}
-
-		res.send({
-			message : msg,
-			code : 200,
-			users : user
+		save().then(function (msg, newUser) {
+			//resolve
+			res.send({
+				message: msg,
+				code: 200,
+				user: newUser
+			});
+		}, function () {
+			//reject
+			res.send(msg);
 		});
 	});
 });
 
-router.delete("/", function( req, res, next ) {
-	findUser( req.body.userId, function(i, user) {
-		var msg = "";
-		if ( user != null ) {
-			users.splice( i, 1 );
-			msg = "삭제 완료";
-		} else {
-			msg = "존재하지 않는 아이디입니다.";
+router.put("/:userId", function (req, res, next) {
+	var param = req.body;
+	param.updatedAt = Date();
+
+	_User2.default.update({ userId: req.params.userId }, param, function (err, user) {
+		if (err) {
+			console.log(err);
+			return;
 		}
 
+		var msg = void 0;
+		if (user.n === 0) {
+			msg = "존재하지 않는 ID입니다.";
+		} else if (user.nModified === 0) {
+			msg = "변경사항이 없습니다.";
+		} else {
+			msg = "수정완료";
+		}
 		res.send({
-			message : msg,
-			code : 200
+			user: user,
+			msg: msg
 		});
 	});
 });
 
+router.delete("/:userId", function (req, res, next) {
+
+	_User2.default.remove({ userId: req.params.userId }, function (err, user) {
+
+		console.log(user);
+
+		if (err) {
+			return res.status(500).send(err);
+		}
+
+		var msg = "삭제되었습니다.";
+		if (user.result.n === 0) {
+			msg = "존재하지 않는 ID입니다.";
+		}
+		res.send({
+			user: user,
+			msg: msg
+		});
+	});
+});
 
 module.exports = router;
